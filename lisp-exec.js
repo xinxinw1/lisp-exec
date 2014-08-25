@@ -30,7 +30,7 @@
   
   var is = L.is;
   
-  var dyn = L.dyn;
+  var sta = L.sta;
   
   var ofn = L.ofn;
   
@@ -87,7 +87,7 @@
   var envs = [];
   /*function evl(a, env){
     if (udfp(env))env = glbs;
-    return dyn(envs, env, function (){
+    return sta(envs, env, function (){
       return evl2(a, env);
     });
   }*/
