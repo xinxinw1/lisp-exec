@@ -142,7 +142,7 @@
       case "fn": return afn(a, x);
       case "jn": return $.apl(a, jarr(x));
       case "jn2": return ajn2(a, x);
-      case "sym": 
+      case "sym": return apl(glb(a), x);
       case "num": return asyn(a, x);
       case "str": return astr(a, x);
       case "arr": return chku(rp(a)[car(x)]);
@@ -369,17 +369,21 @@
     put(a, b, glbs);
   }*/
   
-  var glb = $.man2(function (a, b){
+  function glb(a){
+    return get(a, glbs);
+  }
+  
+  var sglb = $.man2(function (a, b){
     put(a, b, glbs);
   });
   
-  glb("t", "t");
-  glb("$", $.cpyobj($));
+  sglb("t", "t");
+  sglb("$", $.cpyobj($));
   
   //// Specials ////
   
   var spc = $.man1(function (a){
-    glb(a, tg("spc", a));
+    sglb(a, tg("spc", a));
   });
   
   spc("qt", "qq", "=", "var", "if", "fn", "mc",
@@ -388,8 +392,8 @@
   //// JS functions ////
   
   var jn = $.man2(function (a, b){
-    if ($.fnp(b))glb(a, b);
-    else glb(a, tg("jn2", prs(b[0]), b[1]));
+    if ($.fnp(b))sglb(a, b);
+    else sglb(a, tg("jn2", prs(b[0]), b[1]));
   });
   
   jn({
@@ -457,6 +461,7 @@
     
     glbs: glbs,
     glb: glb,
+    sglb: sglb,
     jn: jn,
     bol: bol
   }, L);
