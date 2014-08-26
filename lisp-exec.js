@@ -25,6 +25,7 @@
   var arrp = L.arrp;
   var fnp = L.fnp;
   var macp = L.macp;
+  var smacp = L.smacp;
   var spcp = L.spcp;
   var prcp = L.prcp;
   
@@ -106,7 +107,11 @@
   
   function evl1(a, env){
     if (atmp(a)){
-      if (symp(a))return get(a, env);
+      if (symp(a)){
+        var x = get(a, env);
+        if (smacp(x))return evl1(apl(rp(x), []), env);
+        return x;
+      }
       return a;
     }
     var o = evl1(car(a), env);
@@ -132,6 +137,9 @@
       case "while": return ewhi(car(a), cdr(a), env);
       case "set?": return esetp(evl1(car(a), env), env);
       case "obj": return eobj(a, env);
+      case "cat": return ecat(a, env);
+      case "thr": return ethr(a, env);
+      case "smc": return smc(cons("do", a), env);
     }
     err(espc, "Unknown spcial prcedure f = $1", f);
   }
@@ -281,6 +289,10 @@
     return tg("mac", fn(args, expr, env));
   }
   
+  function smc(expr, env){
+    return tg("smac", fn([], expr, env));
+  }
+  
   function ewhi(cond, body, env){
     while (!nilp(evl1(cond, env))){
       evl1(cons("do", body), env);
@@ -308,6 +320,22 @@
     if (synp(a))return a;
     if (strp(a))return a[1];
     err(eprop, "Invalid object property name a = $1", a);
+  }
+  
+  function ecat(a, env){
+    var obj = evl1(car(a), env);
+    try {
+      return evl1(cons("do", cdr(a)), env);
+    } catch (e){
+      if (is(typ(e), "throw") && is(rp(e).obj, obj)){
+        return rp(e).ret;
+      }
+      throw e;
+    }
+  }
+  
+  function ethr(a, env){
+    throw tg("throw", {obj: evl1(car(a), env), ret: evl1(cadr(a), env)});
   }
   
   function cal(a){
@@ -391,8 +419,8 @@
     sglb(a, tg("spc", a));
   });
   
-  spc("qt", "qq", "=", "var", "if", "fn", "mc",
-      "evl", "while", "set?", "obj");
+  spc("qt", "qq", "=", "var", "if", "fn", "mc", "smc",
+      "evl", "while", "set?", "obj", "cat", "thr");
   
   //// JS functions ////
   
