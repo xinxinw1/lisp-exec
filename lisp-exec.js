@@ -209,8 +209,13 @@
     err(aobj, "Invalid object property name car(x) = $1", k);
   }
   
+  function cadar(a){
+    return car(cdr(car(a)));
+  }
+  
   function elis(a, env){
     if (no(a))return [];
+    if (is(caar(a), "splice"))return app(evl1(cadar(a), env), elis(cdr(a), env));
     return cons(evl1(car(a), env), elis(cdr(a), env));
   }
   
