@@ -96,13 +96,11 @@
   function evl(a, env){
     if (env === udf)env = glbs;
     $.L.psh(env, envs);
-    var r = [];
     try {
-      r = evl1(a, env);
+      return evl1(a, env);
     } finally {
       $.L.pop(envs);
     }
-    return r;
   }
   
   function evl1(a, env){
@@ -165,9 +163,10 @@
   
   function par(a, b, env){
     if (nilp(a))return [];
-    if (atmp(a))return wobj(a, b, env);
-    if (is(car(a), "o"))return wobj(cadr(a), nilp(b)?evl1(nth("2", a), env):b, env);
-    return applis(par(car(a), car(b), env), par(cdr(a), cdr(b), env));
+    if (atmp(a))return wobj(a, udfp(b)?[]:b, env);
+    if (is(car(a), "o"))return wobj(cadr(a), udfp(b)?evl1(nth("2", a), env):b, env);
+    if (udfp(b))b = [];
+    return applis(par(car(a), nilp(b)?udf:car(b), env), par(cdr(a), cdr(b), env));
   }
   
   function parenv(a, b, env){
@@ -231,24 +230,31 @@
   }
   
   var qgs = {};
-  function eqq(a, env, lvl){
-    if (udfp(lvl)){
-      lvl = 1;
+  function eqq(a, env){
+    if (env === udf)env = glbs;
+    var prev = qgs;
+    try {
       qgs = {};
+      return eqq1(a, env, 1);
+    } finally {
+      qgs = prev;
     }
+  }
+  
+  function eqq1(a, env, lvl){
     if (atmp(a))return a;
     switch (car(a)){
       case "uq":
         return euq(cadr(a), env, lvl-1).d;
       case "qq":
-        return lis(car(a), eqq(cadr(a), env, lvl+1));
+        return lis(car(a), eqq1(cadr(a), env, lvl+1));
       case "qgs":
         var t = cadr(a);
         if (!udfp(qgs[t]))return qgs[t];
         return qgs[t] = gs();
     }
     var r = eqq2(car(a), env, lvl);
-    return r.f(r.d, eqq(cdr(a), env, lvl));
+    return r.f(r.d, eqq1(cdr(a), env, lvl));
   }
   
   function euq(a, env, lvl){
@@ -259,7 +265,7 @@
       if (r.evp)return r;
       return {evp: false, d: lis("uq", r.d)};
     }
-    return {evp: false, d: lis("uq", eqq(a, env, lvl))};
+    return {evp: false, d: lis("uq", eqq1(a, env, lvl))};
   }
   
   function eqq2(a, env, lvl){
@@ -272,9 +278,9 @@
         return {f: cons, evp: r.evp, d: lis("uq", r.d)};
       case "uqs":
         if (lvl == 1)return {f: app, evp: true, d: evl1(cadr(a), env)};
-        return {f: cons, evp: false, d: eqq(a, env, lvl-1)};
+        return {f: cons, evp: false, d: eqq1(a, env, lvl-1)};
     }
-    return {f: cons, evp: false, d: eqq(a, env, lvl)};
+    return {f: cons, evp: false, d: eqq1(a, env, lvl)};
   }
   
   function eif(a, env){
