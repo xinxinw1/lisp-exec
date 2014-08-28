@@ -140,6 +140,9 @@
       case "cat": return ecat(a, env);
       case "thr": return ethr(a, env);
       case "smc": return smc(cons("do", a), env);
+      case "brk": return ebrk(a, env);
+      case "cont": return econt(a, env);
+      case "prot": return eprot(a, env);
     }
     err(espc, "Unknown spcial prcedure f = $1", f);
   }
@@ -150,7 +153,7 @@
       case "fn": return afn(a, x);
       case "jn": return $.apl(a, jarr(x));
       case "jn2": return ajn2(a, x);
-      case "sym": return apl(glb(a), x);
+      case "sym": 
       case "num": return asyn(a, x);
       case "str": return astr(a, x);
       case "arr": return chku(rp(a)[car(x)]);
@@ -295,9 +298,23 @@
   
   function ewhi(cond, body, env){
     while (!nilp(evl1(cond, env))){
-      evl1(cons("do", body), env);
+      try {
+        evl1(cons("do", body), env);
+      } catch (e){
+        if (is(typ(e), "break"))break;
+        if (is(typ(e), "continue"))continue;
+        throw e;
+      }
     }
     return [];
+  }
+  
+  function ebrk(a, env){
+    throw tg("break", []);
+  }
+  
+  function econt(a, env){
+    throw tg("continue", []);
   }
   
   function esetp(a, env){
@@ -338,8 +355,20 @@
     throw tg("throw", {obj: evl1(car(a), env), ret: evl1(cadr(a), env)});
   }
   
+  function eprot(a, env){
+    try {
+      return evl1(car(a), env);
+    } finally {
+      evl1(cons("do", cdr(a)), env);
+    }
+  }
+  
   function cal(a){
     return apl(a, $.apl(lis, $.sli(arguments, 1)));
+  }
+
+  function calsym(a){
+    return apl(glb(a), $.apl(lis, $.sli(arguments, 1)));
   }
   
   scal(cal);
@@ -420,7 +449,8 @@
   });
   
   spc("qt", "qq", "=", "var", "if", "fn", "mc", "smc",
-      "evl", "while", "set?", "obj", "cat", "thr");
+      "evl", "while", "set?", "obj", "cat", "thr",
+      "brk", "cont", "prot");
   
   //// JS functions ////
   
@@ -491,6 +521,7 @@
     evl1: evl1,
     apl: apl,
     cal: cal,
+    calsym: calsym,
     
     glbs: glbs,
     glb: glb,
