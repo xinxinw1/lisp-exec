@@ -14,6 +14,7 @@
   var nilp = L.nilp;
   var lisp = L.lisp;
   var atmp = L.atmp;
+  var consp = L.consp;
   var synp = L.synp;
   var symp = L.symp;
   var nump = L.nump;
@@ -62,6 +63,10 @@
   var lis = L.lis;
   var nth = L.nth;
   
+  var nrev = L.nrev;
+  var revlis = L.revlis;
+  var napp = L.napp;
+  
   var sub = L.sub;
   
   var oput = L.oput;
@@ -76,6 +81,8 @@
   
   var dol = L.dol;
   var gs = L.gs;
+  
+  var tgsym = L.tgsym;
   
   ////// Optimization //////
   
@@ -104,6 +111,26 @@
   }
   
   function evl1(a, env){
+    if (!$.arrp(a)){ // sym/num, rgx, obj, jfn
+      if (symp(a)){
+        var x = get(a, env);
+        if (smacp(x))return evl1(apl(rp(x), []), env);
+        return x;
+      }
+      return a;
+    }
+    if (a.length !== 2)return a; // nil, str, arr, other tags
+    var o = evl1(car(a), env);
+    if (tgp(o)){ // orig: spcp(o)
+      switch (o[1]){ // orig: typ(o); o[1] is the tag type
+        case "mac": return evl1(apl(o[2], cdr(a)), env);
+        case "spc": return espc(o[2], cdr(a), env);
+      }
+    }
+    return apl(o, elis(cdr(a), env));
+  }
+  
+  /*function evl12(a, env){
     if (atmp(a)){
       if (symp(a)){
         var x = get(a, env);
@@ -120,7 +147,9 @@
       }
     }
     return apl(o, elis(cdr(a), env));
-  }
+  }*/
+  
+  
   
   function espc(f, a, env){
     switch (f){
@@ -161,12 +190,21 @@
     err(apl, "Can't apl a = $1 to x = $2", a, x);
   }
   
-  function par(a, b, env){
+  /*function par(a, b, env){
     if (nilp(a))return [];
     if (atmp(a))return wobj(a, udfp(b)?[]:b, env);
-    if (is(car(a), "o"))return wobj(cadr(a), udfp(b)?evl1(nth("2", a), env):b, env);
-    if (udfp(b))b = [];
-    return applis(par(car(a), nilp(b)?udf:car(b), env), par(cdr(a), cdr(b), env));
+    if (a[0] === "o")return wobj(cadr(a), udfp(b)?evl1(nth("2", a), env):b, env);
+    if (b === udf)b = [];
+    return napp(par(car(a), nilp(b)?udf:car(b), env), par(cdr(a), cdr(b), env));
+  }*/
+  
+  function par(a, b, env){
+    if (!$.arrp(a))return wobj(a, udfp(b)?[]:b, env);
+    if (a.length === 0)return [];
+    if (a[0] === tgsym)return wobj(a, udfp(b)?[]:b, env);
+    if (a[0] === "o")return wobj(cadr(a), udfp(b)?evl1(nth("2", a), env):b, env);
+    if (b === udf)b = [];
+    return napp(par(car(a), nilp(b)?udf:car(b), env), par(cdr(a), cdr(b), env));
   }
   
   function parenv(a, b, env){
@@ -174,15 +212,15 @@
     return env;
   }
   
+  /*function par2(a, b){
+    if (nilp(a))return [];
+    if (atmp(a))return lis(cons(a, b));
+    return app(par2(car(a), car(b)), par2(cdr(a), cdr(b)));
+  }*/
+  
   function wobj(a, b, o){
     oput(o, a, b);
     return lis(cons(a, b));
-  }
-  
-  function applis(a, b){
-    if (no(a))return b;
-    if (no(b))return a;
-    return cons(car(a), applis(cdr(a), b));
   }
   
   function afn(a, x){
@@ -219,15 +257,29 @@
     err(aobj, "Invalid object property name car(x) = $1", k);
   }
   
-  function cadar(a){
-    return car(cdr(car(a)));
+  function elis(a, env){
+    var r = []; var x;
+    // orig: !nilp(a)
+    while (consp(a)){
+      // can't use nrevapp here because the spliced list might still
+      //   be used
+      x = a[0];
+      if (car(x) === "splice")r = revlis(evl1(cadr(x), env), r);
+      else r = cons(evl1(car(a), env), r);
+      a = a[1];
+    }
+    return nrev(r);
   }
   
-  function elis(a, env){
+  /*function elis2(a, env){
     if (no(a))return [];
     if (is(caar(a), "splice"))return app(evl1(cadar(a), env), elis(cdr(a), env));
     return cons(evl1(car(a), env), elis(cdr(a), env));
   }
+  
+  function cadar(a){
+    return car(cdr(car(a)));
+  }*/
   
   var qgs = {};
   function eqq(a, env){
@@ -288,6 +340,15 @@
     if (no(cdr(a)))return evl1(car(a), env);
     if (!nilp(evl1(car(a), env)))return evl1(cadr(a), env);
     return eif(cddr(a), env);
+  }
+  
+  function eif2(a, env){
+    while (true){
+      if (no(a))return [];
+      if (no(cdr(a)))return evl1(car(a), env);
+      if (!nilp(evl1(car(a), env)))return evl1(cadr(a), env);
+      a = cddr(a);
+    }
   }
   
   function fn(args, expr, env){
@@ -382,6 +443,18 @@
   ////// Variables //////
   
   function get(a, env){
+    while (true){
+      if (env === udf){
+        if (a === "nil")return [];
+        if (has(/^c[ad]+r$/, a))return cxr(mid(a));
+        err(get, "Unknown variable a = $1", a);
+      }
+      if (env[a] !== udf)return env[a];
+      env = env[0];
+    }
+  }
+  
+  /*function get2(a, env){
     if (env === udf){
       if (a === "nil")return [];
       if (has(/^c[ad]+r$/, a))return cxr(mid(a));
@@ -389,7 +462,7 @@
     }
     if (env[a] === udf)return get(a, env[0]);
     return env[a];
-  }
+  }*/
   
   function put(a, x, env){
     return env[a] = x;
