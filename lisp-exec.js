@@ -291,107 +291,8 @@
   // `(#g ,`,1 #g) -> (gs1 1 gs1)
   // `(#g `(#g `(#g))) -> (gs1 `(gs1 `(gs1)))
   // `(#g ,`(#g)) -> (gs1 (gs2))
+  // `(#g ,`(#g) #g) -> (gs1 (gs2) gs1)
   // `(#g `(,@#g)) -> (gs1 `(,@gs1))
-  
-  // input: a = a lisp obj, the arg to qq
-  //              (ex. if the call is (qq (a b c)) then a = (a b c) )
-  //        env = the current environment
-  // output: a lisp obj that's the result of the qq
-  var qgs = {}; // quasiquote gensym environment
-  function eqq(a, env){
-    var prevqgs = qgs;
-    qgs = {};
-    try {
-      return eqq1(a, env, 1);
-    } finally {
-      qgs = prev;
-    }
-  }
-  
-  // same as eqq but without new qgs
-  // lvl indicates the current level of nested qq
-  //   lvl = 1 means we're in one qq (ie. the first one)
-  //   lvl = 3 means we're in two more qq
-  //   lvl = 0 means a should be sent to evl
-  
-  function eqq1(a, env, lvl){
-    if (atmp(a))return a;
-    var x = car(a);
-    if (symp(x)){
-      switch (dat(x)){
-        case "uq":
-          return gres(euq(cadr(a), env, lvl-1));
-        case "qq":
-          return lis(x, eqq1(cadr(a), env, lvl+1));
-        case "qgs":
-          var s = dat(cadr(a)); // the arg better be a sym!
-          if (!udfp(qgs[s]))return qgs[s];
-          return qgs[s] = gs();
-      }
-      // else do default
-    }
-    var r = eqq2(x, env, lvl);
-    var f = (gop(r) === "app")?app:cons;
-    return f(gres(r), eqq1(cdr(a), env, lvl));
-  }
-  
-  function euq(a, env, lvl){
-    if (consp(a) && symp(car(a))){
-      switch (dat(car(a))){
-        case "uq":
-          if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
-          var r = euq(cadr(a), env, lvl-1);
-          if (gevp(r))return r;
-          return qr("cons", gevp(r), lis("uq", gres(r)));
-      }
-    }
-    return qr("cons", false, lis("uq", eqq1(a, env, lvl)));
-  }
-  
-  // input: a = an item in a list
-  function eqq2(a, env, lvl){
-    if (consp(a) && symp(car(a))){
-      switch (dat(car(a))){
-        case "uq":
-          if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
-          var r = eqq2(cadr(a), env, lvl-1);
-          if (gevp(r))return r;
-          return qr("cons", gevp(r), lis("uq", gres(r)));
-        case "uqs":
-          if (lvl === 1)return qr("app", true, evl1(cadr(a), env));
-          return qr("cons", false, eqq1(a, env, lvl-1));
-      }
-      // else do default
-    }
-    return qr("cons", false, eqq1(a, env, lvl));
-  }
-  
-  
-  /*function eqq1(a, env, lvl){
-    if (atmp(a))return a;
-    var x = car(a);
-    switch (typ(x)){
-      case "cons":
-        // for (qq ((uqs a) b c)), a = ((uqs a) b c), x = (car a) = (uqs a)
-        // and (qq ((uq a) b c)), a = ((uq a) b c), x = (car a) = (uq a)
-        if (symp(car(x)) && dat(car(x)) === "uqs"){
-          return app(eqq
-        return cons(eqq1(x, env), eqq1(cdr(a), env));
-      case "sym":
-        switch (dat(x)){
-          case "uq":
-            return euq(a, env, lvl);
-          case "qq":
-            return lis(x, eqq1(cadr(a), env, lvl+1));
-          case "qgs":
-            var s = dat(cadr(a)); // the arg better be a sym!
-            if (!udfp(qgs[s]))return qgs[s];
-            return qgs[s] = gs();
-        }
-        // else do default (for all atoms)
-    }
-    return cons(x, eqq1(cdr(a), env));
-  }*/
   
   // quasiquote return
   function qr(op, evp, res){
@@ -410,88 +311,80 @@
     return a.res;
   }
   
-  // input: a = the uq call
-  //        lvl = the level of the current a
-  //          (should be same as before if called by eqq1)
-  // output: a lisp obj as the result of the eval
-  /*function euq(a, env, lvl){
-    return gres(euq2(a, env, lvl));
-  }
-  
-  // output: a qr obj with .evp as whether evl has been run on it
-  //           (and if so the uq's should be removed)
-  //           and .res as the result of the call
-  function euq2(a, env, lvl){
-    if (lvl === 0)return qr(true, evl1(a, env));
-    if (consp(a)){
-      if (is(car(a), sy("uq"))){
-        var r = euq2(cadr(a), env, lvl-1);
-        if (gevp(r))return r;
-        // if r has not been evl'd, add the uq call back onto it
-        return qr(gevp(r), lis(car(a), gres(r)));
-      }
-      if (is(car(a), sy("uqs"))){
-        var r = euq2(cadr(a), env, lvl-1);
-        if (gevp(r))return r;
-        // if r has not been evl'd, add the uq call back onto it
-        return qr(gevp(r), lis(car(a), gres(r)));
-      }
-    }
-    return qr(false, eqq1(a, env, lvl));
-  }*/
-  
-  var qgs = {};
+  // input: a = a lisp obj, the arg to qq
+  //              (ex. if the call is (qq (a b c)) then a = (a b c) )
+  //        env = the current environment
+  // output: a lisp obj that's the result of the qq
+  var qgs = {}; // quasiquote gensym environment
   function eqq(a, env){
-    if (env === udf)env = glbs;
     var prev = qgs;
+    qgs = {};
     try {
-      qgs = {};
       return eqq1(a, env, 1);
     } finally {
       qgs = prev;
     }
   }
   
+  // lvl indicates the current level of nested qq
+  //   lvl = 1 means we're in one qq (ie. the first one)
+  //   lvl = 3 means we're in two more qq
+  //   lvl = 0 means a should be sent to evl
+  
   function eqq1(a, env, lvl){
     if (atmp(a))return a;
-    switch (car(a)){
-      case "uq":
-        return euq(cadr(a), env, lvl-1).d;
-      case "qq":
-        return lis(car(a), eqq1(cadr(a), env, lvl+1));
-      case "qgs":
-        var t = cadr(a);
-        if (!udfp(qgs[t]))return qgs[t];
-        return qgs[t] = gs();
+    var x = car(a);
+    if (symp(x)){
+      switch (dat(x)){
+        case "uq":
+          return gres(euq(a, env, lvl));
+        case "qq":
+          return lis(x, eqq1(cadr(a), env, lvl+1));
+        case "qgs":
+          var s = dat(cadr(a)); // the arg better be a sym!
+          if (!udfp(qgs[s]))return qgs[s];
+          return qgs[s] = gs();
+      }
+      // else do default
     }
-    var r = eqq2(car(a), env, lvl);
-    return r.f(r.d, eqq1(cdr(a), env, lvl));
+    var r = eqq2(x, env, lvl);
+    var f = (gop(r) === "app")?app:cons;
+    return f(gres(r), eqq1(cdr(a), env, lvl));
   }
   
+  // input: a = an unquote call not in a list
+  // the same as eqq2 but without uqs
+  // output: a qr obj
   function euq(a, env, lvl){
-    if (lvl == 0)return {evp: true, d: evl1(a, env)};
-    if (atmp(a))return {evp: false, d: lis("uq", a)};
-    if (car(a) == "uq"){
-      var r = euq(cadr(a), env, lvl-1);
-      if (r.evp)return r;
-      return {evp: false, d: lis("uq", r.d)};
+    if (consp(a) && symp(car(a))){
+      switch (dat(car(a))){
+        case "uq":
+          if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
+          var r = euq(cadr(a), env, lvl-1);
+          if (gevp(r))return r;
+          return qr("cons", gevp(r), lis(car(a), gres(r)));
+      }
+      // else do default
     }
-    return {evp: false, d: lis("uq", eqq1(a, env, lvl))};
+    return qr("cons", false, eqq1(a, env, lvl));
   }
   
+  // input: a = an item in a list
   function eqq2(a, env, lvl){
-    if (atmp(a))return {f: cons, evp: false, d: a};
-    switch (car(a)){
-      case "uq":
-        if (lvl == 1)return {f: cons, evp: true, d: evl1(cadr(a), env)};
-        var r = eqq2(cadr(a), env, lvl-1);
-        if (r.evp)return r;
-        return {f: cons, evp: r.evp, d: lis("uq", r.d)};
-      case "uqs":
-        if (lvl == 1)return {f: app, evp: true, d: evl1(cadr(a), env)};
-        return {f: cons, evp: false, d: eqq1(a, env, lvl-1)};
+    if (consp(a) && symp(car(a))){
+      switch (dat(car(a))){
+        case "uq":
+          if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
+          var r = eqq2(cadr(a), env, lvl-1);
+          if (gevp(r))return r;
+          return qr("cons", gevp(r), lis(car(a), gres(r)));
+        case "uqs":
+          if (lvl === 1)return qr("app", true, evl1(cadr(a), env));
+          return qr("cons", false, eqq1(a, env, lvl-1));
+      }
+      // else do default
     }
-    return {f: cons, evp: false, d: eqq1(a, env, lvl)};
+    return qr("cons", false, eqq1(a, env, lvl));
   }
   
   // input: a = a lisp obj the var name, x = a lisp obj the value to be set to
@@ -647,7 +540,7 @@
       if (env === udf){
         if (a === "nil")return nil();
         if ($.has(/^c[ad]+r$/, a))return cxr($.mid(a));
-        err(get, "Unknown variable a = $1", a);
+        $.err(get, "Unknown variable a = $1", a);
       }
       if (env[a] !== udf)return env[a];
       env = env[0];
