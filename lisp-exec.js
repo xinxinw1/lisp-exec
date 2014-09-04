@@ -7,7 +7,6 @@
   ////// Import //////
   
   var typ = L.typ;
-  var tag = L.tag;
   var rep = L.rep;
   var dat = L.dat;
   var mkdat = L.mkdat;
@@ -19,48 +18,23 @@
   var ob = L.ob;
   var ar = L.ar;
   
+  var udfp = L.udfp;
   var nilp = L.nilp;
-  var lisp = L.lisp;
   var atmp = L.atmp;
   var consp = L.consp;
-  var synp = L.synp;
   var symp = L.symp;
-  var nump = L.nump;
-  var objp = L.objp;
-  var rgxp = L.rgxp;
-  var udfp = L.udfp;
-  var strp = L.strp;
-  var arrp = L.arrp;
-  var jnp = L.jnp;
-  var fnp = L.fnp;
-  var macp = L.macp;
   var smacp = L.smacp;
-  var specp = L.specp;
-  var prcp = L.prcp;
   
   var is = L.is;
   
   var sta = L.sta;
   
-  var ofn = L.ofn;
-  
-  var tarr = L.tarr;
-  var tobj = L.tobj;
   var jarr = L.jarr;
-  var jnum = L.jnum;
   var prop = L.prop;
   
   var ref = L.ref;
   
-  var map = L.map;
-  var has = L.has;
-  
-  var rst = L.rst;
-  var mid = L.mid;
-  
   var app = L.app;
-  
-  var beg = L.beg;
   
   var car = L.car;
   var cdr = L.cdr;
@@ -80,25 +54,19 @@
   
   var nrev = L.nrev;
   var revlis = L.revlis;
-  var napp = L.napp;
-  
-  var sub = L.sub;
   
   var oput = L.oput;
   
   var sapl = L.sapl;
   
-  var chku = L.chku;
   var chkb = L.chkb;
   var chrb = L.chrb;
   
-  var psh = L.psh;
-  var pop = L.pop;
-  
   var err = L.err;
   
-  var dol = L.dol;
   var gs = L.gs;
+  
+  var prs = L.prs;
   
   ////// Lisp evaluator //////
   
@@ -539,7 +507,7 @@
     while (true){
       if (env === udf){
         if (a === "nil")return nil();
-        if ($.has(/^c[ad]+r$/, a))return cxr($.mid(a));
+        if ($.has(/^c[ad]+r$/, a))return jn(cxr($.mid(a)));
         $.err(get, "Unknown variable a = $1", a);
       }
       if (env[a] !== udf)return env[a];
@@ -629,65 +597,15 @@
   //        if b is a js arr,
   //          b[0] = a str of lisp data as the args
   //          b[1] = a js fn
-  var sjn = $.man2(function (a, b){
+  var djn = $.man2(function (a, b){
     if ($.fnp(b))return sglb(a, jn(b));
     return sglb(a, jn2(b[0], b[1]));
-  });
-  
-  sjn({
-    car: car,
-    cdr: cdr,
-    cons: cons,
-    
-    caar: caar,
-    cdar: cdar,
-    cadr: cadr,
-    cddr: cddr,
-    
-    typ: typ,
-    tag: tag,
-    rep: rep,
-    dat: dat,
-    
-    is: chrb(is),
-    
-    lis: lis,
-    
-    do: dol,
-    gs: gs,
-    
-    apl: apl,
-    
-    "*out*": function (a){return nil();}
-  });
-  
-  ofn(function (a){
-    return cal(get("*out*"), a);
   });
   
   //// Booleans ////
   
   var bol = $.man2(function (a, b){
-    sjn(a, chrb(b));
-  });
-  
-  bol({
-    "lis?": lisp,
-    "atm?": atmp,
-    "nil?": nilp,
-    "cons?": consp,
-    "syn?": synp,
-    "sym?": symp,
-    "num?": nump,
-    "obj?": objp,
-    "rgx?": rgxp,
-    "str?": strp,
-    "arr?": arrp,
-    "fn?": fnp,
-    "jn?": jnp,
-    "mac?": macp,
-    "spec?": specp,
-    "prc?": prcp
+    return djn(a, chrb(b));
   });
   
   ////// Object exposure //////
@@ -708,7 +626,7 @@
     glbs: glbs,
     glb: glb,
     sglb: sglb,
-    sjn: sjn,
+    djn: djn,
     bol: bol
   }, L);
   
