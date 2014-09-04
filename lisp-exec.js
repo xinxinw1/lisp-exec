@@ -7,6 +7,7 @@
   ////// Import //////
   
   var typ = L.typ;
+  var tag = L.tag;
   var rep = L.rep;
   var dat = L.dat;
   var mkdat = L.mkdat;
@@ -30,6 +31,7 @@
   var sta = L.sta;
   
   var jarr = L.jarr;
+  var jstr = L.jstr;
   var prop = L.prop;
   
   var ref = L.ref;
@@ -423,15 +425,20 @@
   }*/
   
   function fn(ag, bd, env){
-    return {type: "fn", ag: ag, bd: bd, env: env};
+    return {type: "fn", nm: nil(), ag: ag, bd: bd, env: env};
   }
   
   function mc(ag, bd, env){
-    return mkdat("mac", fn(ag, bd, env));
+    return {type: "mac", nm: nil(), data: fn(ag, bd, env)};
   }
   
   function smc(bd, env){
-    return mkdat("smac", fn(nil(), bd, env));
+    return {type: "smac", nm: nil(), data: fn(nil(), bd, env)};
+  }
+  
+  function setnm(a, x){
+    tag(a, "nm", jstr(x));
+    return a;
   }
   
   function ewhi(cond, body, env){
@@ -617,6 +624,8 @@
     // apl is already sapl'd
     
     jcal: jcal,
+    
+    setnm: setnm,
     
     xget: get,
     xput: put,
