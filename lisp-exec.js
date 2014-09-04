@@ -102,6 +102,14 @@
   
   ////// Lisp evaluator //////
   
+  // L.evl(L.prs("(car (cons 1 2))"))
+  // L.evl(L.prs("((fn (a n) (a n)) '(1 2 3) -1)"))
+  // L.evl(L.prs("('(1 2 3) -3)"))
+  // L.evl(L.prs("(\"123\" -3)"))
+  // L.evl(L.prs("(if (nil) 3 4)"))
+  // L.evl(L.prs("(var lis (fn a (if (nil? a) nil (cons (car a) (lis @(cdr a))))))"))
+  // L.evl(L.prs("(lis 1 2 3)"))
+  
   // moved here so envs = lis(glbs) doesn't make list(udf)
   var glbs = {};
   
