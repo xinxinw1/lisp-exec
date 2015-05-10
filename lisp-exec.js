@@ -84,6 +84,8 @@
   // moved here so envs = lis(glbs) doesn't make list(udf)
   var glbs = {};
   
+  // envs only exists so I can run set(a, x), get(a) and setp(a) in JS and have it work in the current scope; running get(a, env) doesn't look through envs
+  
   // envs always has glbs so that get(a) gets from glbs when 
   //   nothing is running
   var envs = lis(glbs);
@@ -123,6 +125,7 @@
       case "mc": return mc(car(a), cons(sy("do"), cdr(a)), env);
       case "smc": return smc(cons(sy("do"), a), env);
       case "evl": return evl1(evl1(car(a), env), env);
+      case "gevl": return evl1(evl1(car(a), env), glbs);
       case "while": return ewhi(car(a), cdr(a), env);
       case "obj": return eobj(a, env);
       case "cat": return ecat(a, env);
@@ -590,7 +593,7 @@
   });
   
   spec("qt", "qq", "=", "var", "if", "fn", "mc", "smc",
-       "evl", "while", "set?", "obj", "cat", "thr",
+       "evl", "gevl", "while", "set?", "obj", "cat", "thr",
        "brk", "cont", "prot");
   
   //// JS functions ////
