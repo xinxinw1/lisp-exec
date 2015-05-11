@@ -128,9 +128,9 @@
       case "gevl": return evl1(evl1(car(a), env), glbs);
       case "while": return ewhi(car(a), cdr(a), env);
       case "obj": return eobj(a, env);
-      case "cat": return ecat(a, env);
-      case "thr": return ethr(a, env);
-      case "brk": return ebrk(a, env);
+      case "catch": return ecat(a, env);
+      case "throw": return ethr(a, env);
+      case "break": return ebrk(a, env);
       case "cont": return econt(a, env);
       case "prot": return eprot(a, env);
     }
@@ -593,8 +593,8 @@
   });
   
   spec("qt", "qq", "=", "var", "if", "fn", "mc", "smc",
-       "evl", "gevl", "while", "set?", "obj", "cat", "thr",
-       "brk", "cont", "prot");
+       "evl", "gevl", "while", "set?", "obj", "catch", "throw",
+       "break", "cont", "prot");
   
   //// JS functions ////
   
