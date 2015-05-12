@@ -28,6 +28,8 @@
   
   var is = L.is;
   
+  var dsj = L.dsj;
+  
   var sta = L.sta;
   
   var tlis = L.tlis;
@@ -97,6 +99,8 @@
   }
   
   function evl1(a, env){
+    //var buga = dsj(a);
+    //var bugenv = prn(env);
     switch (typ(a)){
       case "sym":
         var x = get(dat(a), env);
@@ -119,6 +123,7 @@
       case "qq": return eqq(car(a), env);
       case "=": return eset(car(a), evl1(cadr(a), env), env);
       case "var": return evar(car(a), evl1(cadr(a), env), env);
+      case "glob": return evar(car(a), evl1(cadr(a), env), glbs);
       case "set?": return esetp(evl1(car(a), env), env);
       case "if": return eif(a, env);
       case "fn": return fn(car(a), cons(sy("do"), cdr(a)), env);
@@ -153,7 +158,8 @@
       case "nil":
       case "cons": return $.apl(ref, $.hea(jarr(x), a));
     }
-    err(apl, "Can't apl a = $1 to x = $2", a, x);
+    return apl(ob(a), x);
+    //err(apl, "Can't apl a = $1 to x = $2", a, x);
   }
   
   sapl(apl);
@@ -592,7 +598,7 @@
     return sglb(a, sp(a));
   });
   
-  spec("qt", "qq", "=", "var", "if", "fn", "mc", "smc",
+  spec("qt", "qq", "=", "var", "glob", "if", "fn", "mc", "smc",
        "evl", "gevl", "while", "set?", "obj", "catch", "throw",
        "break", "cont", "prot");
   
