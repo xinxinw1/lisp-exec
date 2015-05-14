@@ -125,12 +125,13 @@
       case "var": return evar(car(a), evl1(cadr(a), env), env);
       case "glob": return evar(car(a), evl1(cadr(a), env), glbs);
       case "set?": return esetp(evl1(car(a), env), env);
+      //case "set?": return esetp(car(a), env);
       case "if": return eif(a, env);
       case "fn": return fn(car(a), cons(sy("do"), cdr(a)), env);
       case "mc": return mc(car(a), cons(sy("do"), cdr(a)), env);
       case "smc": return smc(cons(sy("do"), a), env);
-      case "evl": return evl1(evl1(car(a), env), env);
-      case "gevl": return evl1(evl1(car(a), env), glbs);
+      case "eval": return evl1(evl1(car(a), env), env);
+      case "geval": return evl1(evl1(car(a), env), glbs);
       case "while": return ewhi(car(a), cdr(a), env);
       case "obj": return eobj(a, env);
       case "catch": return ecat(a, env);
@@ -139,7 +140,7 @@
       case "cont": return econt(a, env);
       case "prot": return eprot(a, env);
     }
-    err(espc, "Unknown spcial prcedure f = $1", f);
+    err(espc, "Unknown spcial procedure f = $1", f);
   }
   
   
@@ -386,7 +387,7 @@
         var o = evl1(car(a), env);
         switch (typ(o)){
           case "mac": return eset(apl(dat(o), cdr(a)), x, env);
-          case "spc": err(set, "Can't set a = $1 to x = $2", a, x);
+          case "spec": err(set, "Can't set a = $1 to x = $2", a, x);
         }
         return slis(o, elis(cdr(a), env), x);
     }
@@ -599,7 +600,7 @@
   });
   
   spec("qt", "qq", "=", "var", "glob", "if", "fn", "mc", "smc",
-       "evl", "gevl", "while", "set?", "obj", "catch", "throw",
+       "eval", "geval", "while", "set?", "obj", "catch", "throw",
        "break", "cont", "prot");
   
   //// JS functions ////
