@@ -22,7 +22,7 @@
   var udfp = L.udfp;
   var nilp = L.nilp;
   var atmp = L.atmp;
-  var consp = L.consp;
+  var lisp = L.lisp;
   var symp = L.symp;
   var smacp = L.smacp;
   
@@ -106,7 +106,7 @@
         var x = get(dat(a), env);
         if (smacp(x))return evl1(apl(dat(x), nil()), env);
         return x;
-      case "cons":
+      case "lis":
         var o = evl1(car(a), env);
         switch (typ(o)){
           case "mac": return evl1(apl(dat(o), cdr(a)), env);
@@ -157,7 +157,7 @@
       case "arr": 
       case "obj": 
       case "nil":
-      case "cons": return $.apl(ref, $.hea(jarr(x), a));
+      case "lis": return $.apl(ref, $.hea(jarr(x), a));
     }
     return apl(ob(a), x);
     //err(apl, "Can't apl a = $1 to x = $2", a, x);
@@ -185,10 +185,13 @@
   // output: new pairs are added to env, env is returned
   function parenv(a, b, env){
     switch (typ(a)){
-      case "cons": 
+      case "lis": 
         if (is(car(a), sy("o"))){
           var r = udfp(b)?evl1(nth(nu("2"), a), env):b;
           oput(env, cadr(a), r);
+        } else if (is(car(a), sy("arr"))){
+          if (typ(b) !== "arr")err(parenv, "a is an array but b = $1 is not", b);
+          parenv(cdr(a), tlis(b), env);
         } else {
           if (udfp(b) || nilp(b)){
             parenv(car(a), udf, env);
@@ -215,7 +218,7 @@
   function parjn2(a, b, r){
     if (udfp(r))r = []; // r should be a js arr
     switch (typ(a)){
-      case "cons":
+      case "lis":
         parjn2(car(a), car(b), r);
         parjn2(cdr(a), cdr(b), r);
         return r;
@@ -228,7 +231,7 @@
   // eval lisp list a for sending to apl as args
   function elis(a, env){
     var r = nil(); var x;
-    while (consp(a)){
+    while (lisp(a)){
       // can't use nrevapp here because the spliced list might still
       //   be used
       x = car(a);
@@ -339,7 +342,7 @@
   // the same as eqq2 but without uqs
   // output: a qr obj
   function euq(a, env, lvl){
-    if (consp(a) && symp(car(a))){
+    if (lisp(a) && symp(car(a))){
       switch (dat(car(a))){
         case "uq":
           if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
@@ -354,7 +357,7 @@
   
   // input: a = an item in a list
   function eqq2(a, env, lvl){
-    if (consp(a) && symp(car(a))){
+    if (lisp(a) && symp(car(a))){
       switch (dat(car(a))){
         case "uq":
           if (lvl === 1)return qr("cons", true, evl1(cadr(a), env));
@@ -383,7 +386,7 @@
   function eset(a, x, env){
     switch (typ(a)){
       case "sym": return set(dat(a), x, env);
-      case "cons":
+      case "lis":
         var o = evl1(car(a), env);
         switch (typ(o)){
           case "mac": return eset(apl(dat(o), cdr(a)), x, env);
@@ -408,7 +411,7 @@
         break;
       case "arr": 
       case "obj": 
-      case "cons": return L.set(f, car(a), x);
+      case "lis": return L.set(f, car(a), x);
     }
     err(slis, "Can't set list with f = $1 and a = $2 to x = $3", f, a, x);
   }
