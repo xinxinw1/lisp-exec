@@ -189,7 +189,8 @@
         if (is(car(a), sy("o"))){
           var r = udfp(b)?evl1(nth(nu("2"), a), env):b;
           oput(env, cadr(a), r);
-        } else if (is(car(a), sy("arr"))){
+        } else if (is(car(a), sy("arr")) && !nilp(cdr(a))){
+          // ((fn (arr)) 3) should bind arr
           if (typ(b) !== "arr")err(parenv, "a is an array but b = $1 is not", b);
           parenv(cdr(a), tlis(b), env);
         } else {
@@ -407,6 +408,7 @@
       case "jn":
         if (dat(f) === car)return scar(car(a), x);
         if (dat(f) === cdr)return scdr(car(a), x);
+        if (dat(f) === name)return name(car(a), x);
         //if (f === nth)return L.set(cadr(a), car(a), x);
         break;
       case "arr": 
@@ -414,6 +416,14 @@
       case "lis": return L.set(f, car(a), x);
     }
     err(slis, "Can't set list with f = $1 and a = $2 to x = $3", f, a, x);
+  }
+  
+  function name(a, x){
+    if (!udfp(x)){
+      tag(a, "nm", jstr(x));
+      return a;
+    }
+    return sy(rep(a, "nm"));
   }
   
   // input: a = a lisp obj the var name, env = an env
@@ -448,11 +458,6 @@
   
   function smc(bd, env){
     return {type: "smac", nm: nil(), data: fn(nil(), bd, env)};
-  }
-  
-  function setnm(a, x){
-    tag(a, "nm", jstr(x));
-    return a;
   }
   
   function ewhi(cond, body, env){
@@ -579,6 +584,10 @@
   // moved to top of file
   //var glbs = {};
   
+  function allglbs(){
+    return tlis(ar($.map(sy, $.keys(glbs))));
+  }
+  
   // input: a = a js str
   function glb(a){
     return get(a, glbs);
@@ -639,13 +648,14 @@
     
     jcal: jcal,
     
-    setnm: setnm,
+    name: name,
     
     xget: get,
     xput: put,
     xset: set,
     xsetp: setp,
     
+    allglbs: allglbs,
     glbs: glbs,
     glb: glb,
     sglb: sglb,
