@@ -1,7 +1,8 @@
-/***** Lisp Interpreter 0.1 *****/
+/***** Lisp Interpreter 0.1.1 *****/
 
-/* require tools >= 3.1 */
-/* require lisp-tools */
+/* require tools 4.6.1 */
+/* require prec-math 4.3.2 */
+/* require lisp-tools 0.1 */
 
 (function (win, udf){
   ////// Import //////
@@ -599,7 +600,7 @@
   });
   
   sglb("t", sy("t"));
-  sglb("$", ob($.cpyobj($)));
+  sglb("$", ob($.cpyObj($)));
   
   //// Specials ////
   
