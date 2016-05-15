@@ -641,7 +641,7 @@
   
   ////// Object exposure //////
   
-  $.att({
+  $.att(L, {
     envs: envs,
     evl: evl,
     evl1: evl1,
@@ -662,7 +662,7 @@
     sglb: sglb,
     djn: djn,
     bol: bol
-  }, L);
+  });
   
   ////// Testing //////
   
