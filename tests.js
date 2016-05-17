@@ -9,4 +9,6 @@ QUnit.test('Interpreter', function (assert){
   assert.testevl("``,(if t 5 4)", "`,(if t 5 4)");
   assert.testevl("``(a b ,(c d ,(if t 5 4)))", "`(a b ,(c d 5))");
   // ...
+  
+  assert.testevl("('(1 2 3) 0)", "1");
 });

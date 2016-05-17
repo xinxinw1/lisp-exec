@@ -158,7 +158,7 @@
       case "arr": 
       case "obj": 
       case "nil":
-      case "lis": return $.apl(ref, $.hea(jarr(x), a));
+      case "lis": return $.apl(ref, $.head(a, jarr(x)));
     }
     return apl(ob(a), x);
     //err(apl, "Can't apl a = $1 to x = $2", a, x);
