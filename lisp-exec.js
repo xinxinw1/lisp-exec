@@ -144,10 +144,17 @@
     err(espc, "Unknown spcial procedure f = $1", f);
   }
   
+  var applyStack = nil();
+  
+  function apl(a, x){
+    return sta(applyStack, a, function (){
+      return apl1(a, x);
+    });
+  }
   
   // input: a = a lisp fn, x = a lisp obj of args
   //          x doesn't have to be a list
-  function apl(a, x){
+  function apl1(a, x){
     switch (typ(a)){
       case "fn": return afn(a, x);
       case "jn": return $.apl(dat(a), jarr(x));
@@ -162,6 +169,10 @@
     }
     return apl(ob(a), x);
     //err(apl, "Can't apl a = $1 to x = $2", a, x);
+  }
+  
+  function getApplyStack(){
+    return applyStack;
   }
   
   sapl(apl);
@@ -646,6 +657,8 @@
     evl: evl,
     evl1: evl1,
     // apl is already sapl'd
+    
+    getApplyStack: getApplyStack,
     
     jcal: jcal,
     
